@@ -1,4 +1,4 @@
-# AskDocs AI 📄
+# AskDocs AI
 
 A RAG-based document assistant that lets you upload PDFs and chat with them using natural language. Built with Amazon Bedrock (Claude) for generation and FAISS for vector search.
 
