@@ -13,7 +13,7 @@
 
 ## Live Demo
 
-> 🚀 **[Coming soon — deploying to Hugging Face Spaces]**
+>  **[Coming soon — deploying to Hugging Face Spaces]**
 >
 > To run locally, follow the [Quick Start](#quick-start) below.
 
