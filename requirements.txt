@@ -1,24 +1,2 @@
-# API
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
-python-multipart==0.0.9
-
-# PDF parsing
-pypdf==4.2.0
-
-# Embeddings (runs locally, no API needed)
-sentence-transformers==3.0.1
-faiss-cpu==1.8.0
-
-# AWS Bedrock
-boto3==1.34.101
-
-# Frontend
-streamlit==1.35.0
-requests==2.32.2
-
-# Config
-python-dotenv==1.0.1
-
-# Utilities
-numpy==1.26.4
+# Demo mode — only streamlit needed
+streamlit
