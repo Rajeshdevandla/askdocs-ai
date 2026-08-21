@@ -2,6 +2,7 @@
 
 > **Upload any PDF and chat with it using natural language** — powered by Amazon Bedrock (Claude) and FAISS vector search.
 
+[![CI](https://github.com/Rajeshdevandla/askdocs-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Rajeshdevandla/askdocs-ai/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Amazon Bedrock](https://img.shields.io/badge/powered%20by-Amazon%20Bedrock-orange.svg)](https://aws.amazon.com/bedrock/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
@@ -152,6 +153,15 @@ docker build -t askdocs-ai .
 docker run -p 8000:8000 --env-file .env askdocs-ai
 ```
 
+### Run tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+Pull requests also run Python error linting, the unit test suite, and a Docker image build in GitHub Actions.
+
 ---
 
 ## API Reference
@@ -186,13 +196,17 @@ askdocs-ai/
 ├── config.py                  # env vars, loaded and validated at startup
 ├── core/
 │   ├── embedder.py            # sentence-transformer wrapper
+│   ├── text_utils.py          # validated overlapping text chunking
 │   ├── vector_store.py        # FAISS wrapper (add/search)
 │   └── rag_pipeline.py        # PDF parsing + full RAG orchestration
 ├── api/
 │   └── main.py                # FastAPI routes
 ├── frontend/
 │   └── app.py                 # Streamlit UI
+├── tests/                     # unit tests
+├── .github/workflows/ci.yml  # lint, test, and Docker build checks
 ├── requirements.txt
+├── requirements-dev.txt
 ├── .env.example
 └── Dockerfile
 ```
@@ -215,4 +229,4 @@ askdocs-ai/
 
 ---
 
-*Built by [Rajesh Kumar](https://rajeshdevandla.github.io) — Full Stack Java & AI Developer | Chicago, IL*
+*Built by [Rajesh Kumar](https://rajeshdevandla.github.io) — AI Engineer | Chicago, IL*
