@@ -9,33 +9,11 @@ from pypdf import PdfReader
 
 from config import config
 from core.embedder import Embedder
+from core.text_utils import split_into_chunks
 from core.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 
-
-def split_into_chunks(text: str, chunk_size: int, overlap: int) -> list[str]:
-    """
-    Split a long string into overlapping chunks.
-
-    Overlap means consecutive chunks share some text at their boundaries.
-    This prevents answers from being cut off when the relevant sentence
-    happens to fall right at the edge of a chunk.
-
-    Example: chunk_size=10, overlap=3
-    "ABCDEFGHIJKLMN" -> ["ABCDEFGHIJ", "HIJKLMNOPQ", ...]
-    """
-    chunks = []
-    start = 0
-
-    while start < len(text):
-        end = start + chunk_size
-        chunk = text[start:end].strip()
-        if chunk:
-            chunks.append(chunk)
-        start += chunk_size - overlap
-
-    return chunks
 
 
 class RAGPipeline:
