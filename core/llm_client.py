@@ -3,8 +3,6 @@
 import json
 from typing import Protocol
 
-import boto3
-
 
 class LLMClient(Protocol):
     def generate(self, prompt: str) -> str:
@@ -29,6 +27,8 @@ class BedrockLLMClient:
     """Amazon Bedrock Claude client used when demo mode is disabled."""
 
     def __init__(self, config):
+        import boto3
+
         self.model_id = config.bedrock_model_id
         self.client = boto3.client(
             service_name="bedrock-runtime",
