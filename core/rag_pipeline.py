@@ -2,6 +2,7 @@ import logging
 import uuid
 from pathlib import Path
 from typing import Optional
+
 from pypdf import PdfReader
 
 from config import config
@@ -14,7 +15,6 @@ from core.vector_store import VectorStore
 logger = logging.getLogger(__name__)
 
 
-
 class RAGPipeline:
     """
     The main orchestrator for the RAG (Retrieval-Augmented Generation) flow.
@@ -24,7 +24,7 @@ class RAGPipeline:
 
     What it does:
     1. Parses PDFs and stores them in the vector store
-    2. Takes user questions, finds relevant chunks, sends them to Bedrock
+    2. Takes user questions, finds relevant chunks, sends them to the selected LLM client
     3. Keeps a short conversation history so follow-up questions work
     """
 
@@ -99,7 +99,7 @@ class RAGPipeline:
         1. Embed the question
         2. Search vector store for relevant chunks
         3. Build a prompt with the retrieved context
-        4. Call Bedrock Claude to generate an answer
+        4. Call the selected LLM client to generate an answer
         5. Save to history and return
         """
         if not self.document_loaded:
