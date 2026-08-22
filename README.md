@@ -157,7 +157,7 @@ docker run -p 8000:8000 --env-file .env askdocs-ai
 
 ```bash
 pip install -r requirements-dev.txt
-pytest -q
+python -m pytest -q
 ```
 
 Pull requests also run Python error linting, the unit test suite, and a Docker image build in GitHub Actions.
