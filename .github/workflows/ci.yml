@@ -22,7 +22,7 @@ jobs:
       - name: Lint for Python errors
         run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
       - name: Run tests
-        run: pytest -q
+        run: python -m pytest -q
 
   docker:
     runs-on: ubuntu-latest
