@@ -14,7 +14,7 @@
 
 ## Live Demo
 
->  **[Coming soon — deploying to Hugging Face Spaces]**
+> **Credential-free demo mode is available locally. Public hosting is the next deployment step.**
 >
 > To run locally, follow the [Quick Start](#quick-start) below.
 
@@ -115,14 +115,15 @@ git clone https://github.com/Rajeshdevandla/askdocs-ai.git
 cd askdocs-ai
 ```
 
-### 2. Set up environment variables
+### 2. Choose demo or production mode
 
 ```bash
 cp .env.example .env
-# Edit .env and fill in your AWS credentials
+# DEMO_MODE=true runs without AWS credentials.
+# Set DEMO_MODE=false and provide AWS credentials for real Bedrock answers.
 ```
 
-Required variables:
+Production variables:
 
 | Variable | Description |
 |---|---|
@@ -130,7 +131,7 @@ Required variables:
 | `AWS_ACCESS_KEY_ID` | IAM user access key |
 | `AWS_SECRET_ACCESS_KEY` | IAM user secret key |
 
-> **AWS setup:** You need an IAM user with `bedrock:InvokeModel` permission and Claude 3 Haiku enabled in Amazon Bedrock for your region.
+> **Demo safety:** Demo answers are explicitly labeled and make no external LLM call.\n>\n> **AWS setup:** In production mode, you need an IAM user with `bedrock:InvokeModel` permission and Claude 3 Haiku enabled in Amazon Bedrock for your region.
 
 ### 3. Install and run
 
@@ -196,6 +197,8 @@ askdocs-ai/
 ├── config.py                  # env vars, loaded and validated at startup
 ├── core/
 │   ├── embedder.py            # sentence-transformer wrapper
+│   ├── llm_client.py          # Bedrock and credential-free demo clients
+│   ├── prompting.py           # grounded multi-turn prompt construction
 │   ├── text_utils.py          # validated overlapping text chunking
 │   ├── vector_store.py        # FAISS wrapper (add/search)
 │   └── rag_pipeline.py        # PDF parsing + full RAG orchestration

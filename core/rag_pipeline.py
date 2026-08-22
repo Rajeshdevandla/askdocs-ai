@@ -1,19 +1,18 @@
-import json
 import logging
 import uuid
 from pathlib import Path
 from typing import Optional
 
-import boto3
 from pypdf import PdfReader
 
 from config import config
 from core.embedder import Embedder
+from core.llm_client import build_llm_client
+from core.prompting import build_rag_prompt
 from core.text_utils import split_into_chunks
 from core.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
-
 
 
 class RAGPipeline:
@@ -25,7 +24,7 @@ class RAGPipeline:
 
     What it does:
     1. Parses PDFs and stores them in the vector store
-    2. Takes user questions, finds relevant chunks, sends them to Bedrock
+    2. Takes user questions, finds relevant chunks, sends them to the selected LLM client
     3. Keeps a short conversation history so follow-up questions work
     """
 
@@ -37,12 +36,7 @@ class RAGPipeline:
         self.document_loaded = False
         self.document_name: Optional[str] = None
 
-        self.bedrock = boto3.client(
-            service_name="bedrock-runtime",
-            region_name=config.aws_region,
-            aws_access_key_id=config.aws_access_key_id,
-            aws_secret_access_key=config.aws_secret_access_key,
-        )
+        self.llm = build_llm_client(config)
 
         logger.info(f"RAGPipeline initialized, session={self.session_id}")
 
@@ -105,7 +99,7 @@ class RAGPipeline:
         1. Embed the question
         2. Search vector store for relevant chunks
         3. Build a prompt with the retrieved context
-        4. Call Bedrock Claude to generate an answer
+        4. Call the selected LLM client to generate an answer
         5. Save to history and return
         """
         if not self.document_loaded:
@@ -130,29 +124,8 @@ class RAGPipeline:
             f"[Page {r['metadata'].get('page', '?')}]: {r['text']}" for r in results
         )
 
-        # include last few conversation turns for context
-        history = ""
-        if self.conversation_history:
-            recent = self.conversation_history[-3:]
-            history = "\n".join(
-                f"User: {h['question']}\nAssistant: {h['answer']}" for h in recent
-            )
-
-        prompt = f"""You are a helpful assistant that answers questions about a document.
-Only use the context provided below. If the answer isn't there, say so.
-Always mention which page the information is from.
-
-Previous conversation:
-{history if history else "None"}
-
-Document context:
-{context}
-
-Question: {question}
-
-Answer:"""
-
-        answer = self._call_bedrock(prompt)
+        prompt = build_rag_prompt(context, question, self.conversation_history)
+        answer = self.llm.generate(prompt)
 
         self.conversation_history.append({"question": question, "answer": answer})
 
@@ -165,23 +138,3 @@ Answer:"""
             "session_id": self.session_id,
         }
 
-    def _call_bedrock(self, prompt: str) -> str:
-        """Call Amazon Bedrock to get a response from Claude."""
-        try:
-            body = json.dumps(
-                {
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": 1024,
-                    "messages": [{"role": "user", "content": prompt}],
-                }
-            )
-            response = self.bedrock.invoke_model(
-                modelId=config.bedrock_model_id,
-                body=body,
-            )
-            result = json.loads(response["body"].read())
-            return result["content"][0]["text"]
-
-        except Exception as e:
-            logger.error(f"Bedrock call failed: {e}")
-            raise RuntimeError(f"LLM call failed: {str(e)}")

@@ -7,10 +7,11 @@ load_dotenv()
 
 @dataclass
 class Config:
-    # AWS stuff - needed for Bedrock API calls
+    # Runtime mode and optional AWS credentials
+    demo_mode: bool
     aws_region: str
-    aws_access_key_id: str
-    aws_secret_access_key: str
+    aws_access_key_id: str | None
+    aws_secret_access_key: str | None
 
     # which model to use for generating answers
     bedrock_model_id: str
@@ -37,16 +38,20 @@ def load_config() -> Config:
     I centralized this here so the app fails with a clear error
     if something is missing - instead of crashing randomly later.
     """
-    missing = []
-
-    for var in ["AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]:
-        if not os.getenv(var):
-            missing.append(var)
-
-    if missing:
-        raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+    demo_mode = os.getenv("DEMO_MODE", "true").lower() in {"1", "true", "yes"}
+    missing = [
+        var
+        for var in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+        if not os.getenv(var)
+    ]
+    if not demo_mode and missing:
+        raise ValueError(
+            "Missing required environment variables when DEMO_MODE=false: "
+            + ", ".join(missing)
+        )
 
     return Config(
+        demo_mode=demo_mode,
         aws_region=os.getenv("AWS_REGION", "us-east-1"),
         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
