@@ -3,7 +3,7 @@ import hashlib
 import streamlit as st
 
 from core.rag_pipeline import RAGPipeline
-from frontend.deployment import load_uploaded_pdf
+from frontend.deployment import load_uploaded_pdfs
 
 st.set_page_config(page_title="AskDocs AI", page_icon="📄", layout="centered")
 st.title("📄 AskDocs AI")
@@ -13,24 +13,29 @@ if "uploader_version" not in st.session_state:
     st.session_state.uploader_version = 0
 
 with st.sidebar:
-    st.header("Upload a Document")
+    st.header("Upload Documents")
     st.caption("Public demo: answers are deterministic and no document is sent to an external LLM.")
-    uploaded_file = st.file_uploader(
-        "Choose a text-based PDF",
+    uploaded_files = st.file_uploader(
+        "Choose one or more text-based PDFs",
         type=["pdf"],
+        accept_multiple_files=True,
         key=f"pdf_upload_{st.session_state.uploader_version}",
     )
 
-    if uploaded_file:
-        contents = uploaded_file.getvalue()
-        document_hash = hashlib.sha256(contents).hexdigest()
+    if uploaded_files:
+        uploads = [(item.name, item.getvalue()) for item in uploaded_files]
+        document_hash = hashlib.sha256(
+            b"".join(
+                name.encode("utf-8") + b"\0" + contents
+                for name, contents in uploads
+            )
+        ).hexdigest()
 
         if st.session_state.get("document_hash") != document_hash:
             with st.spinner("Extracting and indexing the PDF..."):
                 try:
-                    pipeline, metadata = load_uploaded_pdf(
-                        uploaded_file.name,
-                        contents,
+                    pipeline, documents = load_uploaded_pdfs(
+                        uploads,
                         RAGPipeline,
                     )
                 except Exception as exc:
@@ -38,20 +43,24 @@ with st.sidebar:
                 else:
                     st.session_state.pipeline = pipeline
                     st.session_state.document_hash = document_hash
-                    st.session_state.document_name = metadata["document_name"]
+                    st.session_state.document_names = [
+                        document["document_name"] for document in documents
+                    ]
                     st.session_state.messages = []
+                    total_pages = sum(document["page_count"] for document in documents)
+                    total_chunks = sum(document["chunk_count"] for document in documents)
                     st.success(
-                        f"Ready! {metadata['page_count']} pages and "
-                        f"{metadata['chunk_count']} chunks indexed."
+                        f"Ready! {len(documents)} document(s), {total_pages} pages, "
+                        f"and {total_chunks} chunks indexed."
                     )
 
     if "pipeline" in st.session_state:
-        st.info(f"Document: {st.session_state.document_name}")
-        if st.button("Upload a new document"):
+        st.info("Documents: " + ", ".join(st.session_state.document_names))
+        if st.button("Start a new document session"):
             for key in [
                 "pipeline",
                 "document_hash",
-                "document_name",
+                "document_names",
                 "messages",
             ]:
                 st.session_state.pop(key, None)
@@ -72,11 +81,11 @@ for message in st.session_state.messages:
             with st.expander("Sources"):
                 for citation in message["citations"]:
                     st.write(
-                        f"Page {citation['page']} "
+                        f"{citation.get('source', 'Document')} — Page {citation['page']} "
                         f"(relevance: {citation['score']})"
                     )
 
-question = st.chat_input("Ask something about your document...")
+question = st.chat_input("Ask something across your documents...")
 
 if question:
     st.session_state.messages.append({"role": "user", "content": question})
@@ -95,7 +104,7 @@ if question:
                     with st.expander("Sources"):
                         for citation in result["citations"]:
                             st.write(
-                                f"Page {citation['page']} "
+                                f"{citation.get('source', 'Document')} — Page {citation['page']} "
                                 f"(relevance: {citation['score']})"
                             )
                 st.session_state.messages.append(

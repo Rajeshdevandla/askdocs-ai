@@ -1,7 +1,6 @@
 import logging
 import uuid
 from pathlib import Path
-from typing import Optional
 
 from pypdf import PdfReader
 
@@ -34,13 +33,13 @@ class RAGPipeline:
         self.vector_store = VectorStore(dimension=self.embedder.dimension)
         self.conversation_history: list[dict] = []
         self.document_loaded = False
-        self.document_name: Optional[str] = None
+        self.document_names: list[str] = []
 
         self.llm = build_llm_client(config)
 
         logger.info(f"RAGPipeline initialized, session={self.session_id}")
 
-    def load_pdf(self, pdf_path: str) -> dict:
+    def load_pdf(self, pdf_path: str, source_name: str | None = None) -> dict:
         """
         Parse a PDF file and load its content into the vector store.
 
@@ -51,7 +50,8 @@ class RAGPipeline:
         if not path.exists():
             raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
-        logger.info(f"Loading PDF: {path.name}")
+        document_name = source_name or path.name
+        logger.info(f"Loading PDF: {document_name}")
         reader = PdfReader(str(path))
 
         all_chunks = []
@@ -71,7 +71,7 @@ class RAGPipeline:
 
             for chunk in chunks:
                 all_chunks.append(chunk)
-                all_metadata.append({"page": page_num, "source": path.name})
+                all_metadata.append({"page": page_num, "source": document_name})
 
         if not all_chunks:
             raise ValueError(
@@ -83,10 +83,11 @@ class RAGPipeline:
         self.vector_store.add_chunks(all_chunks, vectors, all_metadata)
 
         self.document_loaded = True
-        self.document_name = path.name
+        if document_name not in self.document_names:
+            self.document_names.append(document_name)
 
         return {
-            "document_name": path.name,
+            "document_name": document_name,
             "page_count": len(reader.pages),
             "chunk_count": len(all_chunks),
         }
@@ -121,7 +122,11 @@ class RAGPipeline:
 
         # build context from retrieved chunks
         context = "\n\n".join(
-            f"[Page {r['metadata'].get('page', '?')}]: {r['text']}" for r in results
+            (
+                f"[Source: {r['metadata'].get('source', 'unknown')}, "
+                f"Page {r['metadata'].get('page', '?')}]: {r['text']}"
+            )
+            for r in results
         )
 
         prompt = build_rag_prompt(context, question, self.conversation_history)
@@ -132,9 +137,17 @@ class RAGPipeline:
         return {
             "answer": answer,
             "citations": [
-                {"page": r["metadata"].get("page"), "score": round(r["score"], 3)}
+                {
+                    "source": r["metadata"].get("source"),
+                    "page": r["metadata"].get("page"),
+                    "score": round(r["score"], 3),
+                }
                 for r in results
             ],
             "session_id": self.session_id,
         }
 
+    @property
+    def document_name(self) -> str | None:
+        """Backward-compatible name for clients that expect a single document."""
+        return self.document_names[0] if self.document_names else None

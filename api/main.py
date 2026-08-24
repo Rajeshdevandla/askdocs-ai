@@ -61,7 +61,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     try:
         pipeline = RAGPipeline()
-        result = pipeline.load_pdf(tmp_path)
+        result = pipeline.load_pdf(tmp_path, source_name=file.filename)
         sessions[pipeline.session_id] = pipeline
 
         return {
@@ -108,6 +108,8 @@ def get_session_info(session_id: str):
     return {
         "session_id": session_id,
         "document_name": pipeline.document_name,
+        "document_names": pipeline.document_names,
+        "document_count": len(pipeline.document_names),
         "chunk_count": pipeline.vector_store.total_chunks,
         "conversation_turns": len(pipeline.conversation_history),
     }

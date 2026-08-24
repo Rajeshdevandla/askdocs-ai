@@ -1,6 +1,6 @@
 # AskDocs AI
 
-> **Upload any PDF and chat with it using natural language** — powered by Amazon Bedrock (Claude) and FAISS vector search.
+> **Upload one or more PDFs and chat across them using natural language** — powered by Amazon Bedrock (Claude) and FAISS vector search.
 
 [![CI](https://github.com/Rajeshdevandla/askdocs-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Rajeshdevandla/askdocs-ai/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -24,7 +24,7 @@ The public deployment runs in clearly labeled demo mode and does not require AWS
 
 ## What Problem This Solves
 
-Reading long PDFs to find one specific answer is slow and tedious. AskDocs AI lets you drop in any PDF — a research paper, legal contract, insurance policy, or manual — and ask it questions in plain English. Every answer is grounded in the actual document and cites the exact page it came from.
+Reading long PDFs to find or compare specific answers is slow and tedious. AskDocs AI lets you upload one or more PDFs — research papers, contracts, policies, or manuals — and ask questions across the collection. Every answer is grounded in the uploaded documents and cites the source filename and exact page.
 
 ---
 
@@ -89,7 +89,7 @@ Answer + Page Citations → User
 
 **Key design decisions:**
 - Embeddings run **locally** (no API cost, no latency on uploads)
-- Each PDF gets its own **session** — multiple users are fully isolated
+- Each user gets an isolated **multi-document session** with source-aware chunks
 - FAISS is **in-memory** — fast for demos, swap to Pinecone/pgvector for production
 
 ---
@@ -223,7 +223,6 @@ askdocs-ai/
 ## What I'd Build Next
 
 - **Persistent sessions** — store FAISS index to S3 so sessions survive restarts
-- **Multi-document support** — query across multiple PDFs in one session
 - **Streaming responses** — stream Bedrock output token-by-token to the UI
 
 ---
