@@ -14,9 +14,11 @@
 
 ## Live Demo
 
-> **Credential-free demo mode is available locally. Public hosting is the next deployment step.**
->
-> To run locally, follow the [Quick Start](#quick-start) below.
+**[Launch AskDocs AI on Streamlit Community Cloud](https://askdocs-ai-6weeffugy48vb9k7wssy9k.streamlit.app/)**
+
+The public deployment runs in clearly labeled demo mode and does not require AWS credentials or make an external LLM call.
+
+[![AskDocs AI live Streamlit demo](docs/images/askdocs-live-demo.jpg)](https://askdocs-ai-6weeffugy48vb9k7wssy9k.streamlit.app/)
 
 ---
 
@@ -131,7 +133,9 @@ Production variables:
 | `AWS_ACCESS_KEY_ID` | IAM user access key |
 | `AWS_SECRET_ACCESS_KEY` | IAM user secret key |
 
-> **Demo safety:** Demo answers are explicitly labeled and make no external LLM call.\n>\n> **AWS setup:** In production mode, you need an IAM user with `bedrock:InvokeModel` permission and Claude 3 Haiku enabled in Amazon Bedrock for your region.
+> **Demo safety:** Demo answers are explicitly labeled and make no external LLM call.
+>
+> **AWS setup:** In production mode, you need an IAM user with `bedrock:InvokeModel` permission and Claude 3 Haiku enabled in Amazon Bedrock for your region.
 
 ### 3. Install and run
 
@@ -221,7 +225,6 @@ askdocs-ai/
 - **Persistent sessions** — store FAISS index to S3 so sessions survive restarts
 - **Multi-document support** — query across multiple PDFs in one session
 - **Streaming responses** — stream Bedrock output token-by-token to the UI
-- **Live hosted demo** — deploy to Hugging Face Spaces
 
 ---
 
