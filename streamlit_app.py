@@ -1,7 +1,9 @@
 """Streamlit Community Cloud entry point.
 
-The deploy configuration targets this root file. Importing the application module
-keeps the hosted app and the tested frontend implementation on the same code path.
+Call the shared UI on every rerun; importing it alone only executes it once
+per Python process and leaves later interactions and sessions blank.
 """
 
-from frontend.app import *  # noqa: F401,F403
+from frontend.app import main
+
+main()
