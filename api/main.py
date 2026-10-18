@@ -5,6 +5,7 @@ import tempfile
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pypdf.errors import PdfReadError
 
 from core.rag_pipeline import RAGPipeline
 
@@ -70,6 +71,11 @@ async def upload_pdf(file: UploadFile = File(...)):
             "page_count": result["page_count"],
             "chunk_count": result["chunk_count"],
         }
+    except PdfReadError:
+        raise HTTPException(
+            status_code=422,
+            detail="Cannot read this PDF. Upload a readable PDF without password protection.",
+        )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
