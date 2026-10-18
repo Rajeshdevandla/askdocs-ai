@@ -179,6 +179,11 @@ Pull requests also run Python error linting, the unit test suite, and a Docker i
 | `GET` | `/sessions/{id}` | Get session metadata |
 
 **Upload a PDF:**
+
+Unreadable uploads (empty, damaged, or password-protected PDFs) return HTTP `422`
+with a validation message. Textless PDFs also return `422`; processing failures
+return `500`. Failed uploads do not create sessions.
+
 ```bash
 curl -X POST http://localhost:8000/upload \
   -F "file=@my-document.pdf"
