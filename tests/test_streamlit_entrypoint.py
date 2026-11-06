@@ -122,3 +122,38 @@ def test_root_entrypoint_renders_for_a_second_session(uploads):
     assert len(second.title) == 1
     assert not second.chat_input
     assert "pipeline" not in second.session_state
+
+
+@pytest.mark.parametrize("entrypoint", ["streamlit_app.py", "frontend/app.py"])
+@pytest.mark.parametrize("replacement", ["empty", "invalid"])
+def test_changed_uploads_cannot_keep_answering_old_documents(uploads, entrypoint, replacement):
+    uploads["pdf_upload_0"] = [pdf_upload()]
+    app = AppTest.from_file(str(ROOT / entrypoint)).run()
+    app.chat_input[0].set_value("What is revenue?").run()
+    previous_pipeline = app.session_state.pipeline
+
+    if replacement == "empty":
+        uploads["pdf_upload_0"] = []
+    else:
+        invalid = BytesIO(b"not a PDF")
+        invalid.name = "broken.pdf"
+        uploads["pdf_upload_0"] = [invalid]
+
+    app.run()
+    assert not app.exception
+    assert not app.chat_input
+    assert not app.chat_message
+    for key in ["pipeline", "document_hash", "document_names", "messages"]:
+        assert key not in app.session_state
+    if replacement == "invalid":
+        assert "Could not process this PDF" in app.error[0].value
+
+    # A later valid selection starts fresh, including when reusing the old file.
+    uploads["pdf_upload_0"] = [pdf_upload()]
+    app.run()
+    assert not app.exception
+    assert app.session_state.pipeline is not previous_pipeline
+    assert app.session_state.messages == []
+    app.chat_input[0].set_value("A fresh question").run()
+    assert len(app.chat_message) == 2
+    assert len(app.expander) == 1
