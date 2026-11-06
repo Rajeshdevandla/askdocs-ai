@@ -6,6 +6,12 @@ from core.rag_pipeline import RAGPipeline
 from frontend.deployment import load_uploaded_pdfs
 
 
+def clear_document_session():
+    """Discard answers and indexed content when the upload selection changes."""
+    for key in ["pipeline", "document_hash", "document_names", "messages"]:
+        st.session_state.pop(key, None)
+
+
 def main():
     """Render the UI on every Streamlit run; keep user data in session state."""
     st.set_page_config(page_title="AskDocs AI", page_icon="📄", layout="centered")
@@ -35,6 +41,7 @@ def main():
             ).hexdigest()
 
             if st.session_state.get("document_hash") != document_hash:
+                clear_document_session()
                 with st.spinner("Extracting and indexing the PDF..."):
                     try:
                         pipeline, documents = load_uploaded_pdfs(
@@ -57,16 +64,13 @@ def main():
                             f"and {total_chunks} chunks indexed."
                         )
 
+        else:
+            clear_document_session()
+
         if "pipeline" in st.session_state:
             st.info("Documents: " + ", ".join(st.session_state.document_names))
             if st.button("Start a new document session"):
-                for key in [
-                    "pipeline",
-                    "document_hash",
-                    "document_names",
-                    "messages",
-                ]:
-                    st.session_state.pop(key, None)
+                clear_document_session()
                 st.session_state.uploader_version += 1
                 st.rerun()
 
